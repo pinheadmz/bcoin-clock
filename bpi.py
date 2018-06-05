@@ -87,28 +87,28 @@ def printInfo(info, balance):
 ### draw the recent blockchain
 WINDOW = 30 * 60 # total seconds across width of screen
 def drawBlockchain():
-	axis = 12
+	axis = 24
 	secondsPerCol = WINDOW/MAXYX[1]
 	stdscr.addstr(axis, 0, "[" + "-" * (MAXYX[1]-2) + "]")
 	now = int(time.time())
-	
+	down = True	
+
 	for index, block in BLOCKS.items():
 		secondsAgo = now - block['time']
 		
-		down = True
 		if secondsAgo < WINDOW:
-			dir = 1 if down else -1
+			top = axis if down else axis-15
 			col = MAXYX[1] - (secondsAgo / secondsPerCol) - 8
 			if col > 0:
 				stdscr.addstr(axis, col, "|")
-				stdscr.addstr(axis + (dir*2), col, "#" + str(index))
-				stdscr.addstr(axis + (dir*3), col, "Hash:")
+				stdscr.addstr(top+1, col, "#" + str(index))
+				stdscr.addstr(top+2, col, "Hash:")
 				for i in range(8):
-					stdscr.addstr(6 + (dir * 4) + (dir * i), col+1, block['hash'][i*8:i*8+8])
-				stdscr.addstr(axis + (dir*11), col, "TXs:")
-				stdscr.addstr(axis + (dir*12), col+1, str(block['totalTX']))
-				stdscr.addstr(axis + (dir*13), col, "Age:")
-				stdscr.addstr(axis + (dir*14), col+1, str(secondsAgo/60) + ":" + str(secondsAgo%60).zfill(2))
+					stdscr.addstr(top+3+i, col+1, block['hash'][i*8:i*8+8])
+				stdscr.addstr(top+11, col, "TXs:")
+				stdscr.addstr(top+12, col+1, str("{:,}".format(block['totalTX'])))
+				stdscr.addstr(top+13, col, "Age:")
+				stdscr.addstr(top+14, col+1, str(secondsAgo/60) + ":" + str(secondsAgo%60).zfill(2))
 				down = not down
 
 ### start the curses text-based terminal interface
