@@ -75,37 +75,41 @@ def printInfo(info, balance):
 	stdscr.addstr(3, 0, "Confirmed balance: " + str(confbal))
 	stdscr.addstr(4, 0, "Unconfirmed balance: " + str(unconfbal))
 	
-	#stdscr.addstr(5, 0, str(time.time()))
+	stdscr.addstr(5, 0, "Window size: " + str(WINDOW / 60) + " min"
 
 	drawBlockchain()
 
 	# print menu on bottom
-	menu = "[Q]uit   [D]eposit"
+	menu = "[Q]uit   [D]eposit [+/-]Zoom"
 	stdscr.addstr(MAXYX[0]-1, 0, menu)
 	stdscr.refresh()
 
 ### draw the recent blockchain
 WINDOW = 30 * 60 # total seconds across width of screen
 def drawBlockchain():
+	axis = 12
 	secondsPerCol = WINDOW/MAXYX[1]
-	stdscr.addstr(6, 0, "[" + "-" * (MAXYX[1]-2) + "]")
+	stdscr.addstr(axis, 0, "[" + "-" * (MAXYX[1]-2) + "]")
 	now = int(time.time())
 	
 	for index, block in BLOCKS.items():
 		secondsAgo = now - block['time']
 		
+		down = True
 		if secondsAgo < WINDOW:
+			dir = 1 if down else -1
 			col = MAXYX[1] - (secondsAgo / secondsPerCol) - 8
 			if col > 0:
-				stdscr.addstr(6, col, "|")
-				stdscr.addstr(7, col, "#" + str(index))
-				stdscr.addstr(8, col, "Hash:")
+				stdscr.addstr(axis, col, "|")
+				stdscr.addstr(axis + (dir*2), col, "#" + str(index))
+				stdscr.addstr(axis + (dir*3), col, "Hash:")
 				for i in range(8):
-					stdscr.addstr(9+i, col+1, block['hash'][i*8:i*8+8])
-				stdscr.addstr(17, col, "TXs:")
-				stdscr.addstr(18, col+1, str(block['totalTX']))
-				stdscr.addstr(19, col, "Age:")
-				stdscr.addstr(20, col+1, str(secondsAgo/60) + ":" + str(secondsAgo%60).zfill(2))
+					stdscr.addstr(6 + (dir * 4) + (dir * i), col+1, block['hash'][i*8:i*8+8])
+				stdscr.addstr(axis + (dir*11), col, "TXs:")
+				stdscr.addstr(axis + (dir*12), col+1, str(block['totalTX']))
+				stdscr.addstr(axis + (dir*13), col, "Age:")
+				stdscr.addstr(axis + (dir*14), col+1, str(secondsAgo/60) + ":" + str(secondsAgo%60).zfill(2))
+				down = not down
 
 ### start the curses text-based terminal interface
 REFRESH = 1 # refresh rate in seconds
@@ -138,6 +142,7 @@ def hideCursor():
 
 ### check for keyboard input -- also serves as the pause between REFRESH cycles
 def checkKeyIn():
+	global WINDOW
 	keyNum = stdscr.getch()
 	if keyNum == -1:
 		return False
@@ -147,6 +152,12 @@ def checkKeyIn():
 		sys.exit()
 	if key in ("d", "D"):
 		displayAddr()
+	if key in ("-"):
+		WINDOW += 10 * 60
+	if key in ("+"):
+		WINDOW -= 10 * 60
+		if WINDOW < 0:
+			WINDOW = 10 * 60
 
 ### the main loop!
 os.system('clear')
