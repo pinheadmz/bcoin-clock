@@ -1,7 +1,8 @@
 const fs = require('fs');
+const os = require('os');
 
 // create the a directory for block headers if it doesn't exist already
-const blocksDir = '/home/pi/blocks/';
+const blocksDir = os.homedir() + '/blocks/';
 if (!fs.existsSync(blocksDir)){
     fs.mkdirSync(blocksDir);
 }

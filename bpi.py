@@ -26,7 +26,7 @@ def getBalance():
 	return requests.get(wallurl + 'balance?account=default').json()
 
 ### read the JSON files from disk, store the last 20 in memory, and remove the files
-BLOCKS_DIR = '/home/pi/blocks/'
+BLOCKS_DIR = os.path.expanduser('~') + '/blocks/'
 BLOCKS = {}
 def readFiles(dict, dir, log):
 	files = [files for (dirpath, dirnames, files) in os.walk(dir)][0]
@@ -75,7 +75,7 @@ def printInfo(info, balance):
 	stdscr.addstr(3, 0, "Confirmed balance: " + str(confbal))
 	stdscr.addstr(4, 0, "Unconfirmed balance: " + str(unconfbal))
 	
-	stdscr.addstr(5, 0, "Window size: " + str(WINDOW / 60) + " min"
+	stdscr.addstr(5, 0, "Window size: " + str(WINDOW / 60) + " min")
 
 	drawBlockchain()
 
