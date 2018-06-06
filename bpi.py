@@ -28,11 +28,9 @@ def getBalance():
 ### read the JSON files from disk, store the last 20 in memory, and remove the files
 BLOCKS_DIR = os.path.expanduser('~') + '/blocks/'
 BLOCKS = {}
-def readFiles(dict, dir, log):
+def readFiles(dict, dir):
 	files = [files for (dirpath, dirnames, files) in os.walk(dir)][0]
 	for index in files:
-		if log:
-			sys.stdout.write("\rHeight: " + str(index))
 		try:
 			with open (dir + index) as file:
 				dict[int(index)] = json.load(file)
@@ -61,6 +59,12 @@ def displayAddr():
 	
 ### print the text info display
 def printInfo(info, balance):
+	if MAXYX[0] < 9:
+		stdscr.erase()
+		stdscr.addstr(0, 0, "Window too small!")
+		stdscr.refresh()
+		return False
+
 	# pull the relevant bits from the data
 	progress = info['chain']['progress']
 	latestHeight = info['chain']['height']
@@ -74,8 +78,9 @@ def printInfo(info, balance):
 	stdscr.addstr(2, 0, "Hash: " + str(latestHash))
 	stdscr.addstr(3, 0, "Confirmed balance: " + str(confbal))
 	stdscr.addstr(4, 0, "Unconfirmed balance: " + str(unconfbal))
-	
 	stdscr.addstr(5, 0, "Window size: " + str(WINDOW / 60) + " min")
+
+	stdscr.addstr(0, MAXYX[1]-10, str(MAXYX))
 
 	drawBlockchain()
 
@@ -87,7 +92,13 @@ def printInfo(info, balance):
 ### draw the recent blockchain
 WINDOW = 30 * 60 # total seconds across width of screen
 def drawBlockchain():
-	axis = 24
+	if MAXYX[0] < 40:
+		axis = 6
+		altUpDown = False
+	else:
+		axis = 20
+		altUpDown = True
+
 	secondsPerCol = WINDOW/MAXYX[1]
 	stdscr.addstr(axis, 0, "[" + "-" * (MAXYX[1]-2) + "]")
 	now = int(time.time())
@@ -98,18 +109,20 @@ def drawBlockchain():
 		
 		if secondsAgo < WINDOW:
 			top = axis if down else axis-15
-			col = MAXYX[1] - (secondsAgo / secondsPerCol) - 8
+			col = MAXYX[1] - (secondsAgo / secondsPerCol) - 9
 			if col > 0:
 				stdscr.addstr(axis, col, "|")
 				stdscr.addstr(top+1, col, "#" + str(index))
-				stdscr.addstr(top+2, col, "Hash:")
-				for i in range(8):
-					stdscr.addstr(top+3+i, col+1, block['hash'][i*8:i*8+8])
-				stdscr.addstr(top+11, col, "TXs:")
-				stdscr.addstr(top+12, col+1, str("{:,}".format(block['totalTX'])))
-				stdscr.addstr(top+13, col, "Age:")
-				stdscr.addstr(top+14, col+1, str(secondsAgo/60) + ":" + str(secondsAgo%60).zfill(2))
-				down = not down
+				if MAXYX[0] > 21:
+					stdscr.addstr(top+2, col, "Hash:")
+					for i in range(8):
+						stdscr.addstr(top+3+i, col+1, block['hash'][i*8:i*8+8])
+					stdscr.addstr(top+11, col, "TXs:")
+					stdscr.addstr(top+12, col+1, str("{:,}".format(block['totalTX'])))
+					stdscr.addstr(top+13, col, "Age:")
+					stdscr.addstr(top+14, col+1, str(secondsAgo/60) + ":" + str(secondsAgo%60).zfill(2))
+					if altUpDown:
+						down = not down
 
 ### start the curses text-based terminal interface
 REFRESH = 1 # refresh rate in seconds
@@ -142,8 +155,12 @@ def hideCursor():
 
 ### check for keyboard input -- also serves as the pause between REFRESH cycles
 def checkKeyIn():
-	global WINDOW
+	global WINDOW, MAXYX
 	keyNum = stdscr.getch()
+	if keyNum == curses.KEY_RESIZE:
+		MAXYX = stdscr.getmaxyx()
+		return False
+
 	if keyNum == -1:
 		return False
 	else:
@@ -161,11 +178,9 @@ def checkKeyIn():
 
 ### the main loop!
 os.system('clear')
-print "Syncing with bcoin..."
-readFiles(BLOCKS, BLOCKS_DIR, True)
 while True:
 	# read block headers from files
-	readFiles(BLOCKS, BLOCKS_DIR, False)
+	readFiles(BLOCKS, BLOCKS_DIR)
 	# get data from servers
 	info = getInfo()
 	balance = getBalance()
