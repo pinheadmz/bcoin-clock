@@ -98,7 +98,7 @@ def drawBlockchain():
 	stdscr.addstr(axis, 0, "[" + "-" * (MAXYX[1]-2) + "]")
 	now = int(time.time())
 	down = True	
-	edge = 0
+	edge = axis + 1
 	for index, block in BLOCKS.items():
 		secondsAgo = now - block['time']
 		
@@ -119,8 +119,6 @@ def drawBlockchain():
 					if altUpDown:
 						down = not down
 					edge = axis+14
-				else:
-					edge = axis+1
 	return edge
 
 ### draw progress bars
@@ -166,19 +164,17 @@ stdscr = None
 def startCurses():
 	global stdscr, MAXYX
 	stdscr = curses.initscr()
-	curses.noecho()
-	curses.cbreak()
+	#curses.noecho()
 	curses.halfdelay(REFRESH * 10) # blocking value is x 0.1 seconds
 	MAXYX = stdscr.getmaxyx() # store window dimensions
 startCurses()
 def endCurses():
-	curses.nocbreak()
 	curses.echo()
+	curses.nocbreak()
 	curses.endwin()
 
 ### automatically cleanup curses settings on exit
 def cleanup():
-	time.sleep(10)
 	endCurses()
 	os.system('clear')
 	print "bye!"
@@ -208,7 +204,7 @@ def checkKeyIn():
 		WINDOW += 10 * 60
 	if key in ("+"):
 		WINDOW -= 10 * 60
-		if WINDOW < 0:
+		if WINDOW < 10 * 60:
 			WINDOW = 10 * 60
 
 ### the main loop!
