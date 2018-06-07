@@ -1,5 +1,7 @@
+// allow the script to access the file system on disk
 const fs = require('fs');
 const os = require('os');
+const maxFiles = 20;
 
 // create the a directory for block headers if it doesn't exist already
 const blocksDir = os.homedir() + '/blocks/';
@@ -13,7 +15,7 @@ function writeFile(index, element, dir){
 		if(!err){
 			// delete files older than 20 blocks if it exists
 			try {
-				fs.unlinkSync(dir + (index-20));
+				fs.unlinkSync(dir + (index-maxFiles));
 			} catch(err) {
 				console.log(err);
 			}
