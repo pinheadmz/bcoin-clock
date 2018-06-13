@@ -10,11 +10,11 @@ import time
 
 ### default endpoints, not using any API key
 # testnet
-#nodeurl = "http://127.0.0.1:18332/"
-#wallurl = "http://127.0.0.1:18334/wallet/primary/"
+nodeurl = "http://127.0.0.1:18332/"
+wallurl = "http://127.0.0.1:18334/wallet/primary/"
 # main
-nodeurl = "http://127.0.0.1:8332/"
-wallurl = "http://127.0.0.1:8334/wallet/primary/"
+#nodeurl = "http://127.0.0.1:8332/"
+#wallurl = "http://127.0.0.1:8334/wallet/primary/"
 
 ### set up some functions to get data from bcoin node & wallet servers
 ### these functions are equivalent to using cURL from the command line
@@ -32,20 +32,44 @@ def getBalance():
 ### read the JSON files from disk and keep the last 20 in memory
 # should be the same directory used in the Javascript program (~/blocks on Raspberry Pi)
 BLOCKS_DIR = os.path.expanduser('~') + '/blocks/'
-# global variable to store all the block details
+TXS_DIR = os.path.expanduser('~') + '/txs/'
+# global variable to store all the block and tx details
 BLOCKS = {}
 # generic function to load any directory of JSON files into any object passed in
 def readFiles(dict, dir):
   files = [files for (dirpath, dirnames, files) in os.walk(dir)][0]
   for index in files:
     try:
-      with open (dir + index) as file:
-        dict[int(index)] = json.load(file)
+      with open (dir + str(index)) as file:
+        dict[index] = json.load(file)
     except:
-      pass
+      return False
+    # sort list by index (file name)
     sortedDictKeys = sorted(dict)
+    # only keep last 20 in memory
     if len(sortedDictKeys) > 20:
       del dict[sortedDictKeys[0]]
+
+# check for new txs
+def checkTXs():
+  txs = {}
+  try:
+    readFiles(txs, TXS_DIR)
+  except:
+    return False
+  for hash, tx in txs.items():
+    # flash notification in top right corner for 5 seconds
+    stdscr.addstr(0, MAXYX[1]-16, "New Transaction!", curses.A_REVERSE)
+    stdscr.addstr(1, MAXYX[1]-16, hash[0:16], curses.A_REVERSE)
+    stdscr.addstr(2, MAXYX[1]-16, hash[16:32], curses.A_REVERSE)
+    stdscr.addstr(3, MAXYX[1]-16, hash[32:48], curses.A_REVERSE)
+    stdscr.addstr(4, MAXYX[1]-16, hash[48:64], curses.A_REVERSE)
+    stdscr.addstr(5, MAXYX[1]-16, "Value: " + str(tx['value']), curses.A_REVERSE)
+    hideCursor()
+    stdscr.refresh()
+    # remove tx file so we only notify once
+    os.remove(TXS_DIR + hash)
+    time.sleep(5)
 
 ### calculate cycle progress as % and countdown integer given current blockchain height
 def getDiff(height):
@@ -72,8 +96,8 @@ def printInfo(info, balance):
   stdscr.addstr(0, 0, "Progress: " + str(int(progress*100000000)/1000000.0) + "%")
   stdscr.addstr(1, 0, "Height: " + str(latestHeight))
   stdscr.addstr(2, 0, "Hash: " + str(latestHash))
-  stdscr.addstr(3, 0, "Confirmed balance: " + str(confbal))
-  stdscr.addstr(4, 0, "Unconfirmed balance: " + str(unconfbal))
+  stdscr.addstr(3, 0, "Confirmed balance: " + str(confbal / 100000000.0))
+  stdscr.addstr(4, 0, "Unconfirmed balance: " + str(unconfbal / 100000000.0))
   stdscr.addstr(5, 0, "Window size: " + str(WINDOW / 60) + " min")
 
   edge = drawBlockchain()
@@ -209,6 +233,7 @@ os.system('clear')
 while True:
   # read block headers from files
   readFiles(BLOCKS, BLOCKS_DIR)
+  checkTXs()
   # get data from servers
   info = getInfo()
   balance = getBalance()
