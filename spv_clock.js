@@ -68,9 +68,21 @@ node.use(bcoin.wallet.plugin);
   	writeFile(blockHeight, blockJSON, blocksDir);
   });
   
+  // connect to the wallet database and use the `primary` wallet
+  const walletdb = node.require('walletdb').wdb;
+  const wallet = walletdb.primary;
+
+  // write new tx details to file
+  wallet.on('tx', (tx) => {
+    tx = tx.toJSON();
+    writeFile("TX-test", tx, "/home/pi");
+    console.log('!!!!!!!!!!!!!!!');
+    console.log(tx);
+  });
+
   // Start the blockchain sync
   node.startSync();
-  
+
 })().catch((err) => {
   console.error(err.stack);
   process.exit(1);
