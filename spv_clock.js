@@ -47,8 +47,9 @@ const node = new bcoin.SPVNode({
   loader: require
 });
 
-// Add wallet
+// Add wallet and database
 node.use(bcoin.wallet.plugin);
+
 
 (async () => {
 
@@ -72,9 +73,23 @@ node.use(bcoin.wallet.plugin);
     writeFile(blockHeight, blockJSON, blocksDir);
   });
 
+  // add wallet database
+  const walletdb = node.require('walletdb').wdb;
+  const wallet = await walletdb.primary;
+
   // write new transaction details to file named by tx hash in hex
-  node.on('tx', (tx) => {
+  node.on('tx', async (tx) => {
+    // get readable format for transaction message
     txJSON = tx.inspect();
+    // discover which outputs of this tx belong to our wallet
+    let details = []
+    for (const output of txJSON.outputs) {
+      let outputJSON = output.getJSON('testnet');
+      if (await wallet.hasAddress(outputJSON.address))
+        details.push(outputJSON);
+    }
+    // add "my output" list to object
+    txJSON.details = details;
     fs.writeFile(txDir + txJSON.hash, JSON.stringify(txJSON), function(err){});
   });
 

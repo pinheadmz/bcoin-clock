@@ -58,13 +58,18 @@ def checkTXs():
   except:
     return False
   for hash, tx in txs.items():
-    # flash notification in top right corner for 5 seconds
-    stdscr.addstr(0, MAXYX[1]-16, "New Transaction!", curses.A_REVERSE)
-    stdscr.addstr(1, MAXYX[1]-16, hash[0:16], curses.A_REVERSE)
-    stdscr.addstr(2, MAXYX[1]-16, hash[16:32], curses.A_REVERSE)
-    stdscr.addstr(3, MAXYX[1]-16, hash[32:48], curses.A_REVERSE)
-    stdscr.addstr(4, MAXYX[1]-16, hash[48:64], curses.A_REVERSE)
-    stdscr.addstr(5, MAXYX[1]-16, "Value: " + str(tx['value']), curses.A_REVERSE)
+    # flash notification in top right corner for 5 seconds (or left corner if window is too narrow)
+    col = MAXYX[1] - 50 if MAXYX[1] > 50 else 0
+    stdscr.addstr(0, col, "  ***  New Transaction!  *** ", curses.A_REVERSE)
+    # display receiving addresses and their amounts
+    line = 1
+    total = 0
+    for detail in tx['details']:
+      amt = detail['value'] / 100000000.0
+      total += amt
+      stdscr.addstr(line, col, str(amt) + " " + str(detail['address']), curses.A_REVERSE)
+      line += 1
+    stdscr.addstr(line, col, "TOTAL: " + str(total), curses.A_REVERSE)
     hideCursor()
     stdscr.refresh()
     # remove tx file so we only notify once
