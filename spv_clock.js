@@ -32,7 +32,7 @@ const bcoin = require('bcoin');
 
 // Configure the node for mainnet, write logs, use the database on disk, etc
 const node = new bcoin.SPVNode({
-  network: 'testnet',
+  network: 'main',
   config: true,
   argv: true,
   env: true,
@@ -79,12 +79,15 @@ node.use(bcoin.wallet.plugin);
 
   // write new transaction details to file named by tx hash in hex
   node.on('tx', async (tx) => {
+    // add the tx to the database
+    walletdb.addTX(tx);
+
     // get readable format for transaction message
     txJSON = tx.inspect();
     // discover which outputs of this tx belong to our wallet
     let details = []
     for (const output of txJSON.outputs) {
-      let outputJSON = output.getJSON('testnet');
+      let outputJSON = output.getJSON('main');
       if (await wallet.hasAddress(outputJSON.address))
         details.push(outputJSON);
     }

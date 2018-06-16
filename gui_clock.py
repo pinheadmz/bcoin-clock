@@ -10,11 +10,11 @@ import time
 
 ### default endpoints, not using any API key
 # testnet
-nodeurl = "http://127.0.0.1:18332/"
-wallurl = "http://127.0.0.1:18334/wallet/primary/"
+#nodeurl = "http://127.0.0.1:18332/"
+#wallurl = "http://127.0.0.1:18334/wallet/primary/"
 # main
-#nodeurl = "http://127.0.0.1:8332/"
-#wallurl = "http://127.0.0.1:8334/wallet/primary/"
+nodeurl = "http://127.0.0.1:8332/"
+wallurl = "http://127.0.0.1:8334/wallet/primary/"
 
 ### set up some functions to get data from bcoin node & wallet servers
 ### these functions are equivalent to using cURL from the command line
