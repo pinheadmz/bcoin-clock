@@ -32,7 +32,7 @@ const bcoin = require('bcoin');
 
 // Configure the node for mainnet, write logs, use the database on disk, etc
 const node = new bcoin.SPVNode({
-  network: 'main',
+  network: 'testnet',
   config: true,
   argv: true,
   env: true,
